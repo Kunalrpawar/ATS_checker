@@ -6,6 +6,22 @@ from dotenv import load_dotenv
 import json
 import PyPDF2 as pdf
 
+import re
+import requests
+
+WEBHOOK_URL = "https://connect.pabbly.com/workflow/sendwebhookdata/IjU3NjYwNTZmMDYzMzA0MzA1MjZlNTUzZDUxM2Ei_pc"
+
+# Prepare webhook data dynamically
+def send_webhook_data(jd, resume_text):
+    data = {"Paste the Job Description": jd, "resume": resume_text}
+    try:
+        response = requests.post(WEBHOOK_URL, json=data)
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        st.error(f"❌ Webhook request failed: {e}")
+        return None
+    return response
+
 # Load environment variables
 load_dotenv()
 
@@ -94,6 +110,9 @@ if submit:
             resume_text = input_pdf_text(uploaded_file)
             prompt = input_prompt.format(text=resume_text, jd=jd)
             response = get_gemini_response(prompt)
+            
+            # Send data to webhook
+            send_webhook_data(jd, resume_text)
         
         # Parse and display the response
         try:
